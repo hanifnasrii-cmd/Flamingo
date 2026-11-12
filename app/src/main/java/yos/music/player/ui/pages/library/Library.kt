@@ -30,7 +30,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -45,8 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -62,7 +61,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import yos.music.player.R
 import yos.music.player.code.ListenHistoryManager
-import yos.music.player.code.ListenStatsManager
 import yos.music.player.code.MediaController
 import yos.music.player.code.utils.others.Vibrator
 import yos.music.player.data.libraries.FavPlayListLibrary
@@ -71,14 +69,13 @@ import yos.music.player.data.libraries.YosMediaItem
 import yos.music.player.data.libraries.artistsName
 import yos.music.player.data.libraries.defaultAlbum
 import yos.music.player.data.libraries.defaultArtistsName
-import yos.music.player.data.libraries.defaultTitle
 import yos.music.player.data.objects.LibraryObject
 import yos.music.player.ui.UI
+import yos.music.player.ui.theme.primaryDark
 import yos.music.player.ui.theme.withNight
 import yos.music.player.ui.toUI
 import yos.music.player.ui.widgets.basic.ProfileButton
 import yos.music.player.ui.widgets.basic.Title
-import yos.music.player.ui.widgets.basic.YosWrapper
 
 enum class LibrarySortOption {
     DateAdded,
@@ -100,6 +97,7 @@ fun Library(navController: NavController) {
     val songs = runCatching { MusicLibrary.songs }.getOrDefault(emptyList())
     var sortOption by remember { mutableStateOf(LibrarySortOption.DateAdded) }
     var sortDropdownExpanded by remember { mutableStateOf(false) }
+    var activeFilter by remember { mutableStateOf("All") }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -128,39 +126,80 @@ fun Library(navController: NavController) {
             ProfileButton { navController.toUI(UI.Settings.Main) }
         },
         content = {
-            // 1. Modern Grouped Cupertino Navigation Card
-            item("NavGroup") {
-                LibraryNavigationGroup(navController = navController, songs = songs)
+            // 1. Sleek Filter Chips Bar
+            item("LibraryFilterChips") {
+                LibraryFilterChips(
+                    activeFilter = activeFilter,
+                    onFilterSelected = { filter ->
+                        activeFilter = filter
+                        when (filter) {
+                            "Playlists" -> navController.toUI(UI.PlayLists)
+                            "Artists" -> navController.toUI(UI.LocalArtists)
+                            "Albums" -> navController.toUI(UI.LocalAlbums)
+                            "Songs" -> {
+                                LibraryObject.setTargetListWithTitle("Songs", songs)
+                                navController.toUI(UI.NormalMusic)
+                            }
+                            "Favorites" -> {
+                                LibraryObject.setTargetListWithTitle("Favorites", FavPlayListLibrary.favPlayList)
+                                navController.toUI(UI.NormalMusic)
+                            }
+                            "Folders" -> {
+                                val folderSongs = MusicLibrary.folders.flatMap { it.songs }.ifEmpty { songs }
+                                LibraryObject.setTargetListWithTitle("Folders", folderSongs)
+                                navController.toUI(UI.NormalMusic)
+                            }
+                        }
+                    }
+                )
             }
 
-            // 2. Smart Collections Carousel
+            // 2. Visual Pin Shelf: 4-Tile Hero Grid (Playlists, Favorites, Artists, All Songs)
+            item("QuickAccessGrid") {
+                LibraryQuickAccessGrid(navController = navController, songs = songs)
+            }
+
+            // 3. Smart Collections Row (Recently Played & Recently Added)
             item("SmartCollections") {
                 SmartCollectionsRow(navController = navController, allSongs = songs)
             }
 
-            // 3. Recently Added Header with Sort Controls
+            // 4. Albums Section Header with Glass Sort Dropdown
             item("RecentlyAddedHeader") {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 10.dp),
+                        .padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.library_recently_added_title),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = Color.Black withNight Color.White
-                    )
+                    Column {
+                        Text(
+                            text = stringResource(id = R.string.page_library_albums),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = Color.Black withNight Color.White
+                        )
+                        Text(
+                            text = "${albumList.size} albums in your collection",
+                            fontSize = 12.sp,
+                            color = (Color.Black withNight Color.White).copy(alpha = 0.5f),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
 
                     Box {
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
-                                .background(Color(0xFFF0F0F2) withNight Color(0xFF1E1E22))
+                                .background(Color(0xFFF0F0F4) withNight Color(0xFF1B1D2A))
+                                .border(
+                                    0.6.dp,
+                                    Color.Black.copy(alpha = 0.06f) withNight Color.White.copy(alpha = 0.12f),
+                                    RoundedCornerShape(20.dp)
+                                )
                                 .clickable { sortDropdownExpanded = true }
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                                .padding(horizontal = 14.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
@@ -171,16 +210,16 @@ fun Library(navController: NavController) {
                                 },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color.Black withNight Color.White
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_action_next),
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(10.dp)
                                     .alpha(0.6f),
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = Color.Black withNight Color.White
                             )
                         }
 
@@ -214,13 +253,13 @@ fun Library(navController: NavController) {
                 }
             }
 
-            // 4. Responsive 2-Column Album Grid
+            // 5. Responsive 2-Column Album Grid
             val chunkedAlbums = albumList.chunked(2)
             items(chunkedAlbums, key = { row -> row.joinToString("-") { it.name } }) { pair ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                        .padding(horizontal = 18.dp, vertical = 7.dp),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     LibraryAlbumCard(
@@ -267,171 +306,220 @@ fun Library(navController: NavController) {
 
             // Bottom breathing space
             item("BottomSpacer") {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(28.dp))
             }
         }
     )
 }
 
 /**
- * Modern Grouped Cupertino Navigation Card
+ * 1. Sleek Filter Chips Bar (All, Playlists, Artists, Albums, Songs, Favorites, Folders)
  */
 @Composable
-private fun LibraryNavigationGroup(
-    navController: NavController,
-    songs: List<YosMediaItem>
+private fun LibraryFilterChips(
+    activeFilter: String,
+    onFilterSelected: (String) -> Unit
 ) {
-    val cardBg = Color(0xFFF7F7F9) withNight Color(0xFF161619)
-    val cardBorder = Color.Black.copy(alpha = 0.05f) withNight Color.White.copy(alpha = 0.07f)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(cardBg)
-            .border(0.6.dp, cardBorder, RoundedCornerShape(16.dp))
+    val filters = listOf("All", "Playlists", "Artists", "Albums", "Songs", "Favorites", "Folders")
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Playlists
-        ModernNavRow(
-            icon = painterResource(id = R.drawable.ic_library_link_icon_playlists),
-            label = stringResource(id = R.string.page_library_playlists),
-            onClick = { navController.toUI(UI.PlayLists) }
-        )
-        HorizontalDivider(modifier = Modifier.padding(start = 54.dp), color = cardBorder, thickness = 0.5.dp)
-
-        // Artists
-        ModernNavRow(
-            icon = painterResource(id = R.drawable.ic_library_link_icon_artists),
-            label = stringResource(id = R.string.page_library_artists),
-            onClick = { navController.toUI(UI.LocalArtists) }
-        )
-        HorizontalDivider(modifier = Modifier.padding(start = 54.dp), color = cardBorder, thickness = 0.5.dp)
-
-        // Albums
-        ModernNavRow(
-            icon = painterResource(id = R.drawable.ic_library_link_icon_album),
-            label = stringResource(id = R.string.page_library_albums),
-            onClick = { navController.toUI(UI.LocalAlbums) }
-        )
-        HorizontalDivider(modifier = Modifier.padding(start = 54.dp), color = cardBorder, thickness = 0.5.dp)
-
-        // Songs
-        ModernNavRow(
-            icon = painterResource(id = R.drawable.ic_library_link_icon_songs),
-            label = stringResource(id = R.string.page_library_songs),
-            badge = "${songs.size}",
-            onClick = {
-                LibraryObject.setTargetListWithTitle("Songs", songs)
-                navController.toUI(UI.NormalMusic)
+        items(filters) { filter ->
+            val isSelected = filter == activeFilter
+            val pillShape = RoundedCornerShape(20.dp)
+            Box(
+                modifier = Modifier
+                    .clip(pillShape)
+                    .background(
+                        if (isSelected) {
+                            Color.Black withNight Color.White
+                        } else {
+                            Color(0xFFF0F0F4) withNight Color(0xFF161824)
+                        }
+                    )
+                    .border(
+                        0.6.dp,
+                        if (isSelected) Color.Transparent else (Color.Black.copy(0.06f) withNight Color.White.copy(0.10f)),
+                        pillShape
+                    )
+                    .clickable { onFilterSelected(filter) }
+                    .padding(horizontal = 15.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = filter,
+                    fontSize = 12.5.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isSelected) {
+                        Color.White withNight Color(0xFF0C0D14)
+                    } else {
+                        Color.Black withNight Color(0xFFD6D6DE)
+                    }
+                )
             }
-        )
-        HorizontalDivider(modifier = Modifier.padding(start = 54.dp), color = cardBorder, thickness = 0.5.dp)
-
-        // Favorites
-        ModernNavRow(
-            icon = painterResource(id = R.drawable.ic_nowplaying_favorited),
-            label = stringResource(id = R.string.library_smart_favorites),
-            badge = "${FavPlayListLibrary.favPlayList.size}",
-            onClick = {
-                LibraryObject.setTargetListWithTitle("Favorites", FavPlayListLibrary.favPlayList)
-                navController.toUI(UI.NormalMusic)
-            }
-        )
-        HorizontalDivider(modifier = Modifier.padding(start = 54.dp), color = cardBorder, thickness = 0.5.dp)
-
-        // Folders
-        ModernNavRow(
-            icon = painterResource(id = R.drawable.placeholder_folder),
-            label = stringResource(id = R.string.library_folders),
-            onClick = {
-                val folderSongs = MusicLibrary.folders.flatMap { it.songs }.ifEmpty { songs }
-                LibraryObject.setTargetListWithTitle("Folders", folderSongs)
-                navController.toUI(UI.NormalMusic)
-            }
-        )
-    }
-}
-
-@Composable
-private fun ModernNavRow(
-    icon: Painter,
-    label: String,
-    badge: String? = null,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = icon,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Text(
-            text = label,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.Black withNight Color.White,
-            modifier = Modifier.weight(1f)
-        )
-
-        if (badge != null) {
-            Text(
-                text = badge,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Normal,
-                color = (Color.Black withNight Color.White).copy(alpha = 0.4f),
-                modifier = Modifier.padding(end = 8.dp)
-            )
         }
-
-        Icon(
-            painter = painterResource(id = R.drawable.ic_action_next),
-            contentDescription = null,
-            modifier = Modifier
-                .size(12.dp)
-                .alpha(0.3f),
-            tint = Color.Black withNight Color.White
-        )
     }
 }
 
 /**
- * Smart Collections Carousel: Favorites, Top 25, Recently Played, Recently Added
+ * 2. Visual Pin Shelf: 4-Tile Hero Grid (Playlists, Favorites, Artists, All Songs)
+ */
+@Composable
+private fun LibraryQuickAccessGrid(
+    navController: NavController,
+    songs: List<YosMediaItem>
+) {
+    val favCount = FavPlayListLibrary.favPlayList.size
+    val artistCount = remember(songs) {
+        songs.mapNotNull { it.albumArtists ?: it.artistsName }.distinct().size
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Top Row: Playlists & Favorites
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            VisualPinCard(
+                title = stringResource(id = R.string.page_library_playlists),
+                subtitle = "Custom mixes",
+                iconRes = R.drawable.ic_library_link_icon_playlists,
+                gradient = Brush.linearGradient(listOf(Color(0xFF4A00E0), Color(0xFF8E2DE2))),
+                modifier = Modifier.weight(1f),
+                onClick = { navController.toUI(UI.PlayLists) }
+            )
+
+            VisualPinCard(
+                title = stringResource(id = R.string.library_smart_favorites),
+                subtitle = "$favCount tracks",
+                iconRes = R.drawable.ic_nowplaying_favorited,
+                gradient = Brush.linearGradient(listOf(Color(0xFFFF3358), Color(0xFFFF6B45))),
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    LibraryObject.setTargetListWithTitle("Favorites", FavPlayListLibrary.favPlayList)
+                    navController.toUI(UI.NormalMusic)
+                }
+            )
+        }
+
+        // Bottom Row: Artists & Songs
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            VisualPinCard(
+                title = stringResource(id = R.string.page_library_artists),
+                subtitle = "$artistCount artists",
+                iconRes = R.drawable.ic_library_link_icon_artists,
+                gradient = Brush.linearGradient(listOf(Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364))),
+                modifier = Modifier.weight(1f),
+                onClick = { navController.toUI(UI.LocalArtists) }
+            )
+
+            VisualPinCard(
+                title = stringResource(id = R.string.page_library_songs),
+                subtitle = "${songs.size} tracks",
+                iconRes = R.drawable.ic_library_link_icon_songs,
+                gradient = Brush.linearGradient(listOf(Color(0xFF11998E), Color(0xFF38EF7D))),
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    LibraryObject.setTargetListWithTitle("Songs", songs)
+                    navController.toUI(UI.NormalMusic)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun VisualPinCard(
+    title: String,
+    subtitle: String,
+    iconRes: Int,
+    gradient: Brush,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val cardShape = RoundedCornerShape(16.dp)
+    Box(
+        modifier = modifier
+            .height(76.dp)
+            .clip(cardShape)
+            .background(Color(0xFFF7F7FA) withNight Color(0xFF151724))
+            .border(
+                0.6.dp,
+                Color.Black.copy(0.06f) withNight Color.White.copy(0.09f),
+                cardShape
+            )
+            .clickable(onClick = onClick)
+            .padding(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(gradient),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.5.sp,
+                    color = Color.Black withNight Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    fontSize = 12.sp,
+                    color = (Color.Black withNight Color.White).copy(alpha = 0.5f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 3. Smart Collections Row
  */
 @Composable
 private fun SmartCollectionsRow(
     navController: NavController,
     allSongs: List<YosMediaItem>
 ) {
-    val favList = FavPlayListLibrary.favPlayList
     val recentPlayedList = ListenHistoryManager.recentlyPlayedSongs.value
     val recentlyAddedList = remember(allSongs) {
         allSongs.sortedByDescending { it.addDate ?: 0L }.take(25)
     }
 
-    val collections = remember(favList, recentPlayedList, recentlyAddedList) {
+    val collections = remember(recentPlayedList, recentlyAddedList) {
         listOf(
-            SmartCollectionItem(
-                title = "Favorites",
-                subtitle = "${favList.size} tracks",
-                iconRes = R.drawable.ic_nowplaying_favorited,
-                accentColor = Color(0xFFE64366),
-                onClick = {
-                    LibraryObject.setTargetListWithTitle("Favorites", favList)
-                    navController.toUI(UI.NormalMusic)
-                }
-            ),
             SmartCollectionItem(
                 title = "Recently Added",
                 subtitle = "${recentlyAddedList.size} tracks",
@@ -456,26 +544,26 @@ private fun SmartCollectionsRow(
     }
 
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         items(collections) { item ->
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFF7F7F9) withNight Color(0xFF161619))
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFF7F7FA) withNight Color(0xFF141622))
                     .border(
                         0.5.dp,
-                        Color.Black.copy(alpha = 0.05f) withNight Color.White.copy(alpha = 0.07f),
-                        RoundedCornerShape(12.dp)
+                        Color.Black.copy(alpha = 0.05f) withNight Color.White.copy(alpha = 0.08f),
+                        RoundedCornerShape(14.dp)
                     )
                     .clickable(onClick = item.onClick)
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(30.dp)
                         .clip(CircleShape)
                         .background(item.accentColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
@@ -483,7 +571,7 @@ private fun SmartCollectionsRow(
                     Icon(
                         painter = painterResource(id = item.iconRes),
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(15.dp),
                         tint = item.accentColor
                     )
                 }
@@ -492,7 +580,7 @@ private fun SmartCollectionsRow(
                     Text(
                         text = item.title,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.5.sp,
+                        fontSize = 13.sp,
                         color = Color.Black withNight Color.White
                     )
                     Text(
@@ -525,9 +613,10 @@ private fun LibraryAlbumCard(
     onClick: () -> Unit,
     onPlayClick: () -> Unit
 ) {
+    val cardShape = RoundedCornerShape(14.dp)
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
+            .clip(cardShape)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onPlayClick
@@ -537,8 +626,9 @@ private fun LibraryAlbumCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Color(0xFF202024))
+                .clip(cardShape)
+                .background(Color(0xFF191B26))
+                .border(0.6.dp, Color.White.copy(alpha = 0.08f), cardShape)
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
@@ -552,14 +642,15 @@ private fun LibraryAlbumCard(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Floating quick play circle in bottom-right
+            // Floating frosted play circle on bottom-right of artwork
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(8.dp)
-                    .size(32.dp)
+                    .size(34.dp)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.65f))
+                    .border(0.6.dp, Color.White.copy(alpha = 0.25f), CircleShape)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(bounded = true),
@@ -570,13 +661,13 @@ private fun LibraryAlbumCard(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_nowplaying_mp_play),
                     contentDescription = null,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(15.dp),
                     tint = Color.White
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(7.dp))
 
         Text(
             text = album.name,
@@ -588,7 +679,7 @@ private fun LibraryAlbumCard(
         )
 
         Text(
-            text = "${album.artist} • ${album.songs.size}",
+            text = "${album.artist} • ${album.songs.size} tracks",
             fontSize = 12.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

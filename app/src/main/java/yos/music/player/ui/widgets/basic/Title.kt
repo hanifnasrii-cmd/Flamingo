@@ -71,6 +71,7 @@ import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import yos.music.player.R
 import yos.music.player.data.libraries.SettingsLibrary
+import yos.music.player.ui.theme.backgroundDark
 import yos.music.player.ui.theme.withNight
 
 /*@OptIn(ExperimentalCupertinoApi::class)
@@ -566,15 +567,15 @@ private fun TitleBar(
                             Modifier.hazeChild(
                                 hazeState,
                                 HazeMaterials
-                                    .thick(Color.White withNight Color.Black)
+                                    .thick(Color.White withNight backgroundDark)
                                     .copy(
                                         blurRadius = 32.dp,
-                                        backgroundColor = Color.White withNight Color.Black,
-                                        tint = (Color.White withNight Color.Black).copy(alpha = 0.7f)
+                                        backgroundColor = Color.White withNight backgroundDark,
+                                        tint = (Color.White withNight backgroundDark).copy(alpha = 0.7f)
                                     )
                             )
                         else
-                            Modifier.background(Color.White withNight Color.Black)
+                            Modifier.background(Color.White withNight backgroundDark)
                     )
             )
         }

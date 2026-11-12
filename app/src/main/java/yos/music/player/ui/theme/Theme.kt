@@ -19,9 +19,11 @@ import yos.music.player.ui.widgets.basic.YosWrapper
 private val DarkColorScheme = darkColorScheme(
     primary = primaryDark,
     background = backgroundDark,
-    onBackground = background,
-    surface = backgroundDark,
-    onSurface = background,
+    onBackground = textPrimaryDark,
+    surface = surfaceDark,
+    onSurface = textPrimaryDark,
+    surfaceVariant = surfaceContainerDark,
+    onSurfaceVariant = textSecondaryDark,
     secondary = settingBackDark,
     onSecondary = settingContainerBackDark
 )

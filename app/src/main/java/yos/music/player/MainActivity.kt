@@ -39,6 +39,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -739,7 +740,7 @@ class MainActivity : BaseActivity() {
                                         }
                                     }
 
-                                    val color = Color.White withNight Color(0xFF1C1C1E)
+                                    val color = Color.White withNight Color(0xF212141F)
 
                                     val dragState = rememberDraggableState { delta ->
                                         scope.launch {
@@ -1102,18 +1103,22 @@ class MainActivity : BaseActivity() {
                                                                         .height(miniPlayerHeight)
                                                                         .fillMaxWidth()
                                                                 ) {
-                                                                    // Thin 1.5dp playback progress indicator
+                                                                    // Thin 2dp playback progress indicator
                                                                     Box(
                                                                         modifier = Modifier
                                                                             .fillMaxWidth()
-                                                                            .height(1.5.dp)
+                                                                            .height(2.dp)
                                                                             .background(Color.White.copy(alpha = 0.08f))
                                                                     ) {
                                                                         Box(
                                                                             modifier = Modifier
                                                                                 .fillMaxWidth(fraction = miniPlayerProgress.floatValue)
-                                                                                .height(1.5.dp)
-                                                                                .background(MaterialTheme.colorScheme.primary)
+                                                                                .height(2.dp)
+                                                                                .background(
+                                                                                    Brush.horizontalGradient(
+                                                                                        listOf(Color(0xFFFF3358), Color(0xFFFF6B45))
+                                                                                    )
+                                                                                )
                                                                         )
                                                                     }
 
@@ -1136,8 +1141,9 @@ class MainActivity : BaseActivity() {
                                                                         Box(
                                                                             modifier = Modifier
                                                                                 .size(46.dp)
-                                                                                .clip(RoundedCornerShape(10.dp))
-                                                                                .background(Color(0xFF222226)),
+                                                                                .clip(RoundedCornerShape(12.dp))
+                                                                                .background(Color(0xFF1E202C))
+                                                                                .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
                                                                             contentAlignment = Alignment.Center
                                                                         ) {
                                                                             val artworkUri = MediaViewModelObject.bitmap.value
@@ -1146,7 +1152,7 @@ class MainActivity : BaseActivity() {
                                                                                     dataLambda = { artworkUri },
                                                                                     contentDescription = null,
                                                                                     modifier = Modifier.fillMaxSize(),
-                                                                                    cornerRadius = 10.dp,
+                                                                                    cornerRadius = 12.dp,
                                                                                     shadowAlpha = 0f,
                                                                                     imageQuality = ImageQuality.LOW
                                                                                 )
@@ -1210,12 +1216,13 @@ class MainActivity : BaseActivity() {
                                                                     Row(
                                                                         Modifier
                                                                             .fillMaxHeight()
-                                                                            .padding(end = 10.dp),
+                                                                            .padding(end = 12.dp),
                                                                         verticalAlignment = Alignment.CenterVertically
                                                                     ) {
                                                                         Box(
                                                                             modifier = Modifier
-                                                                                .size(34.dp)
+                                                                                .size(38.dp)
+                                                                                .clip(CircleShape)
                                                                                 .clickable(
                                                                                     interactionSource = remember { MutableInteractionSource() },
                                                                                     indication = ripple(
@@ -1245,38 +1252,26 @@ class MainActivity : BaseActivity() {
                                                                                             targetScale = 0.3f
                                                                                         ) + fadeOut()
                                                                                     )
-                                                                                }) {
-                                                                                if (it) {
-                                                                                    Icon(
-                                                                                        painterResource(
-                                                                                            id = R.drawable.ic_nowplaying_mp_pause
-                                                                                        ),
-                                                                                        contentDescription = "Pause",
-                                                                                        modifier = Modifier
-                                                                                            .fillMaxSize(),
-                                                                                        tint = Color.Black withNight Color.White
-                                                                                    )
-                                                                                } else {
-                                                                                    Icon(
-                                                                                        painterResource(
-                                                                                            id = R.drawable.ic_nowplaying_mp_play
-                                                                                        ),
-                                                                                        contentDescription = "Play",
-                                                                                        modifier = Modifier
-                                                                                            .fillMaxSize(),
-                                                                                        tint = Color.Black withNight Color.White
-                                                                                    )
-                                                                                }
+                                                                                }) { playing ->
+                                                                                Icon(
+                                                                                    painterResource(
+                                                                                        id = if (playing) R.drawable.ic_nowplaying_mp_pause else R.drawable.ic_nowplaying_mp_play
+                                                                                    ),
+                                                                                    contentDescription = if (playing) "Pause" else "Play",
+                                                                                    modifier = Modifier.size(24.dp),
+                                                                                    tint = Color.Black withNight Color.White
+                                                                                )
                                                                             }
                                                                         }
                                                                         Spacer(
                                                                             modifier = Modifier.width(
-                                                                                18.dp
+                                                                                10.dp
                                                                             )
                                                                         )
                                                                         Box(
                                                                             modifier = Modifier
-                                                                                .size(36.dp)
+                                                                                .size(38.dp)
+                                                                                .clip(CircleShape)
                                                                                 .clickable(
                                                                                     interactionSource = remember { MutableInteractionSource() },
                                                                                     indication = ripple(
@@ -1286,35 +1281,21 @@ class MainActivity : BaseActivity() {
                                                                                         Vibrator.click(
                                                                                             context
                                                                                         )
-                                                                                        systemMediaControlResolver.intentSystemMediaDialog()
+                                                                                        MediaController.mediaControl?.seekToNextMediaItem()
                                                                                     }),
                                                                             contentAlignment = Alignment.Center
                                                                         ) {
-                                                                            val bluetoothAudioConnected = rememberBluetoothAudioConnected()
-                                                                            AnimatedContent(
-                                                                                targetState = bluetoothAudioConnected,
-                                                                                transitionSpec = {
-                                                                                    (scaleIn(initialScale = 0.3f) + fadeIn()).togetherWith(
-                                                                                        scaleOut(targetScale = 0.3f) + fadeOut()
-                                                                                    )
-                                                                                }
-                                                                            ) { connected ->
-                                                                                Icon(
-                                                                                    painterResource(
-                                                                                        id = if (connected) {
-                                                                                            R.drawable.ic_earphone
-                                                                                        } else {
-                                                                                            R.drawable.ic_nowplaying_airplay
-                                                                                        }
-                                                                                    ),
-                                                                                    contentDescription = "AirPlay",
-                                                                                    modifier = Modifier
-                                                                                        .size(if (connected) 27.dp else 21.5.dp),
-                                                                                    tint = Color.Black withNight Color.White
-                                                                                )
-                                                                            }
+                                                                            Icon(
+                                                                                painterResource(
+                                                                                    id = R.drawable.ic_nowplaying_mp_fforward
+                                                                                ),
+                                                                                contentDescription = "Next Track",
+                                                                                modifier = Modifier.size(19.dp),
+                                                                                tint = Color.Black withNight Color.White
+                                                                            )
                                                                         }
                                                                     }
+                                                                }
                                                                 }
                                                                 }
                                                             }

@@ -281,40 +281,49 @@ private fun QuietStageZeroState() {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val containerBg = Color(0xFFF7F7F9) withNight Color(0xFF161619)
-    val containerBorder = Color.Black.copy(alpha = 0.05f) withNight Color.White.copy(alpha = 0.07f)
+    val containerBg = Color(0xFFF7F7FA) withNight Color(0xFF151724)
+    val containerBorder = Color.Black.copy(alpha = 0.06f) withNight Color.White.copy(alpha = 0.10f)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 24.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .padding(horizontal = 18.dp, vertical = 20.dp)
+            .clip(RoundedCornerShape(22.dp))
             .background(containerBg)
-            .border(0.6.dp, containerBorder, RoundedCornerShape(20.dp))
-            .padding(24.dp),
+            .border(0.6.dp, containerBorder, RoundedCornerShape(22.dp))
+            .padding(vertical = 32.dp, horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(72.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                .background(Color.Black.copy(0.04f) withNight Color.White.copy(0.05f))
+                .border(0.6.dp, Color.Black.copy(0.08f) withNight Color.White.copy(0.12f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.button_icon_shuffle),
-                contentDescription = null,
-                modifier = Modifier.size(26.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(0.06f) withNight Color.White.copy(0.09f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.button_icon_shuffle),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Black withNight Color.White
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text(
             text = stringResource(id = R.string.stats_quiet_stage_title),
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+            fontSize = 19.sp,
             color = Color.Black withNight Color.White
         )
 
@@ -322,20 +331,20 @@ private fun QuietStageZeroState() {
 
         Text(
             text = stringResource(id = R.string.stats_quiet_stage_subtitle),
-            fontSize = 13.5.sp,
-            color = (Color.Black withNight Color.White).copy(alpha = 0.55f),
+            fontSize = 13.sp,
+            color = (Color.Black withNight Color.White).copy(alpha = 0.5f),
             lineHeight = 18.sp,
-            modifier = Modifier.padding(horizontal = 12.dp),
+            modifier = Modifier.padding(horizontal = 10.dp),
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Compact Shuffle Library Action Button
+        // Luxury Crisp White Pill Button (Apple / Spotify Wrapped standard)
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(24.dp))
-                .background(MaterialTheme.colorScheme.primary)
+                .background(Color.Black withNight Color.White)
                 .clickable {
                     if (songs.isNotEmpty()) {
                         Vibrator.click(context)
@@ -347,21 +356,21 @@ private fun QuietStageZeroState() {
                         Toast.makeText(context, context.getString(R.string.tip_no_song), Toast.LENGTH_SHORT).show()
                     }
                 }
-                .padding(horizontal = 20.dp, vertical = 10.dp),
+                .padding(horizontal = 24.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.button_icon_shuffle),
                 contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = Color.White
+                modifier = Modifier.size(17.dp),
+                tint = Color.White withNight Color(0xFF0C0D14)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = stringResource(id = R.string.stats_shuffle_library),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White
+                fontSize = 14.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White withNight Color(0xFF0C0D14)
             )
         }
     }
@@ -377,8 +386,8 @@ private fun TopAnthemCard(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val cardBg = Color(0xFFF7F7F9) withNight Color(0xFF161619)
-    val cardBorder = Color.Black.copy(alpha = 0.05f) withNight Color.White.copy(alpha = 0.08f)
+    val cardBg = Color(0xFFF7F7FA) withNight Color(0xFF151724)
+    val cardBorder = Color.Black.copy(alpha = 0.06f) withNight Color.White.copy(alpha = 0.10f)
 
     Column(
         modifier = Modifier
@@ -396,28 +405,34 @@ private fun TopAnthemCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(18.dp))
                 .background(cardBg)
-                .border(0.6.dp, cardBorder, RoundedCornerShape(16.dp))
+                .border(0.6.dp, cardBorder, RoundedCornerShape(18.dp))
                 .clickable {
                     playStatsTrack(track, allTracks, scope, context)
                 }
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(track.thumb)
-                    .crossfade(true)
-                    .placeholder(R.drawable.placeholder_music_default_artwork)
-                    .error(R.drawable.placeholder_music_default_artwork)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
+            Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(62.dp)
                     .clip(RoundedCornerShape(12.dp))
-            )
+                    .background(Color(0xFF1E202C))
+                    .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(track.thumb)
+                        .crossfade(true)
+                        .placeholder(R.drawable.placeholder_music_default_artwork)
+                        .error(R.drawable.placeholder_music_default_artwork)
+                        .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
 
             Spacer(modifier = Modifier.width(14.dp))
 
@@ -425,7 +440,7 @@ private fun TopAnthemCard(
                 Text(
                     text = track.title,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
+                    fontSize = 15.5.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     color = Color.Black withNight Color.White
@@ -433,17 +448,17 @@ private fun TopAnthemCard(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "${track.artistName} • ${track.albumName}",
-                    fontSize = 13.sp,
+                    fontSize = 12.5.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = (Color.Black withNight Color.White).copy(alpha = 0.55f)
+                    color = (Color.Black withNight Color.White).copy(alpha = 0.5f)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "${track.listenedMs / 60000L} mins listened",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = primaryDark
                 )
             }
 
@@ -453,14 +468,14 @@ private fun TopAnthemCard(
                 modifier = Modifier
                     .size(38.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    .background(Color.Black withNight Color.White),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_nowplaying_mp_play),
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.size(16.dp),
+                    tint = Color.White withNight Color(0xFF0C0D14)
                 )
             }
         }
@@ -552,11 +567,11 @@ private fun WeeklyActivityChart(events: List<ListenStatsEvent>) {
                             .clip(RoundedCornerShape(6.dp))
                             .background(
                                 if (isToday) {
-                                    MaterialTheme.colorScheme.primary
+                                    Brush.verticalGradient(listOf(Color(0xFFFF3358), Color(0xFFFF6B45)))
                                 } else if (minutes > 0) {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                                    Brush.verticalGradient(listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)))
                                 } else {
-                                    Color.Black.copy(alpha = 0.06f) withNight Color.White.copy(alpha = 0.08f)
+                                    Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.05f) withNight Color.White.copy(alpha = 0.08f), Color.Black.copy(alpha = 0.05f) withNight Color.White.copy(alpha = 0.08f)))
                                 }
                             )
                     )
@@ -565,7 +580,7 @@ private fun WeeklyActivityChart(events: List<ListenStatsEvent>) {
                         text = dayNames[index],
                         fontSize = 11.sp,
                         fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isToday) MaterialTheme.colorScheme.primary else (Color.Black withNight Color.White).copy(alpha = 0.4f)
+                        color = if (isToday) (Color.Black withNight Color.White) else (Color.Black withNight Color.White).copy(alpha = 0.4f)
                     )
                 }
             }
@@ -609,7 +624,8 @@ private fun TopGenresSection(trackEntries: List<StatsTrackEntry>) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFF0F0F2) withNight Color(0xFF1E1E22))
+                        .background(Color(0xFFF0F0F4) withNight Color(0xFF161824))
+                        .border(0.6.dp, Color.White.copy(0.08f), RoundedCornerShape(20.dp))
                         .padding(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Text(
@@ -678,15 +694,16 @@ private fun StatsHeadlineWithStreak(
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .background(Color(0x22FFA502))
+                    .border(0.6.dp, Color(0x55FFA502), RoundedCornerShape(20.dp))
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(id = R.string.stats_streak_days, streakDays),
+                    text = "🔥 " + stringResource(id = R.string.stats_streak_days, streakDays),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color(0xFFFF9F1A)
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -763,8 +780,16 @@ private fun StatsPeriodPills(
                 modifier = Modifier
                     .clip(pillShape)
                     .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
-                        else Color(0xFFF0F0F2) withNight Color(0xFF1E1E22)
+                        if (isSelected) {
+                            Color.Black withNight Color.White
+                        } else {
+                            Color(0xFFF0F0F4) withNight Color(0xFF161824)
+                        }
+                    )
+                    .border(
+                        0.6.dp,
+                        if (isSelected) Color.Transparent else (Color.Black.copy(0.06f) withNight Color.White.copy(0.10f)),
+                        pillShape
                     )
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -774,9 +799,13 @@ private fun StatsPeriodPills(
             ) {
                 Text(
                     text = pillLabel,
-                    fontSize = 13.5.sp,
+                    fontSize = 13.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSelected) Color.White else (Color.Black withNight Color.White).copy(alpha = 0.7f)
+                    color = if (isSelected) {
+                        Color.White withNight Color(0xFF0C0D14)
+                    } else {
+                        Color.Black.copy(0.7f) withNight Color(0xFFD6D6DE)
+                    }
                 )
             }
         }

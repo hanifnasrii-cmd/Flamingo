@@ -5,15 +5,19 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -42,7 +46,7 @@ fun ProfileButton(onClick: () -> Unit) {
         }
     }
     val modifier = Modifier
-        .size(if (profilePictureUri.value.isEmpty()) 24.dp else 32.dp)
+        .size(if (profilePictureUri.value.isEmpty()) 30.dp else 32.dp)
         .clip(CircleShape)
         .combinedClickable(
             onClick = onClick,
@@ -55,18 +59,25 @@ fun ProfileButton(onClick: () -> Unit) {
         )
 
     if (profilePictureUri.value.isEmpty()) {
-        Icon(
-            imageVector = CupertinoIcons.Default.PersonCropCircle,
-            contentDescription = stringResource(R.string.profile_picture),
-            modifier = modifier,
-            tint = MaterialTheme.colorScheme.primary
-        )
+        Box(
+            modifier = modifier
+                .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                .border(0.6.dp, Color.White.copy(alpha = 0.16f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = CupertinoIcons.Default.PersonCropCircle,
+                contentDescription = stringResource(R.string.profile_picture),
+                modifier = Modifier.size(20.dp),
+                tint = Color.White.copy(alpha = 0.85f)
+            )
+        }
     } else {
         AsyncImage(
             model = profilePictureUri.value,
             contentDescription = stringResource(R.string.profile_picture),
             contentScale = ContentScale.Crop,
-            modifier = modifier
+            modifier = modifier.border(0.6.dp, Color.White.copy(alpha = 0.2f), CircleShape)
         )
     }
 }

@@ -1,10 +1,5 @@
 package yos.music.player.ui.pages
 
-import android.graphics.drawable.Drawable
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +24,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,52 +32,34 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
-import androidx.core.graphics.drawable.toDrawable
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import coil.imageLoader
 import coil.request.ImageRequest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import yos.music.player.R
 import yos.music.player.code.ListenHistoryManager
 import yos.music.player.code.MediaController
-import yos.music.player.code.utils.others.BitmapResolver
 import yos.music.player.code.utils.others.Vibrator
 import yos.music.player.code.utils.player.FadeExo.fadePause
 import yos.music.player.code.utils.player.FadeExo.fadePlay
 import yos.music.player.data.libraries.MusicLibrary
-import yos.music.player.data.libraries.SettingsLibrary
 import yos.music.player.data.libraries.YosMediaItem
 import yos.music.player.data.libraries.artistsName
 import yos.music.player.data.libraries.defaultAlbum
@@ -92,7 +69,7 @@ import yos.music.player.data.models.ImageViewModel
 import yos.music.player.data.objects.LibraryObject
 import yos.music.player.data.objects.MediaViewModelObject
 import yos.music.player.ui.UI
-import yos.music.player.ui.theme.YosRoundedCornerShape
+import yos.music.player.ui.theme.primaryDark
 import yos.music.player.ui.theme.withNight
 import yos.music.player.ui.toUI
 import yos.music.player.ui.widgets.basic.ProfileButton
@@ -131,7 +108,7 @@ fun Home(
                 RecommendCard(imageViewModel)
             }
 
-            // 4. Quick Picks (3-Row Vertical Track Layout)
+            // 4. Quick Picks (Unified 3-Track Glass Container)
             item("QuickPicks") {
                 QuickPicksSection()
             }
@@ -149,6 +126,10 @@ fun Home(
             // 7. Listening History (if available)
             item("RecentlyPlayedCard") {
                 RecentlyPlayedCard()
+            }
+
+            item("BottomSpacer") {
+                Spacer(modifier = Modifier.height(28.dp))
             }
         }
     )
@@ -177,39 +158,38 @@ private fun DynamicGreetingHeader(songCount: Int) {
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 6.dp)
     ) {
+        val infoText = if (songCount > 0) {
+            "${formattedDate.uppercase(Locale.getDefault())} • $songCount TRACKS"
+        } else {
+            formattedDate.uppercase(Locale.getDefault())
+        }
+
         Text(
-            text = formattedDate.uppercase(Locale.getDefault()),
+            text = infoText,
             fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = (Color.Black withNight Color.White).copy(alpha = 0.5f),
+            letterSpacing = 1.2.sp
+        )
+        Spacer(modifier = Modifier.height(3.dp))
+        Text(
+            text = stringResource(id = greeting),
+            fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            letterSpacing = 1.sp
+            color = Color.Black withNight Color.White
         )
         Spacer(modifier = Modifier.height(2.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(id = greeting),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black withNight Color.White
-            )
-            if (songCount > 0) {
-                Text(
-                    text = "$songCount tracks",
-                    fontSize = 12.sp,
-                    color = (Color.DarkGray withNight Color.LightGray).copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
+        Text(
+            text = "Jump back into your favorites or discover fresh sound.",
+            fontSize = 12.5.sp,
+            color = (Color.Black withNight Color.White).copy(alpha = 0.45f),
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
 /**
- * 2. Jump Back In: Resume the last active session with album art and quick-play button.
+ * 2. Jump Back In: Resume the last active session with album art and crisp white play button.
  */
 @Composable
 private fun JumpBackInCard() {
@@ -220,13 +200,13 @@ private fun JumpBackInCard() {
     val scope = rememberCoroutineScope()
     val isPlaying = MediaViewModelObject.isPlaying.value && currentPlaying != null
 
-    val cardBg = Color(0xFFF6F6F8) withNight Color(0xFF161619)
-    val cardBorder = Color.Black.copy(alpha = 0.05f) withNight Color.White.copy(alpha = 0.08f)
+    val cardBg = Color(0xFFF7F7FA) withNight Color(0xFF151724)
+    val cardBorder = Color.Black.copy(alpha = 0.06f) withNight Color.White.copy(alpha = 0.09f)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 10.dp)
+            .padding(horizontal = 18.dp, vertical = 10.dp)
     ) {
         Text(
             text = stringResource(id = R.string.home_jump_back_in),
@@ -239,9 +219,9 @@ private fun JumpBackInCard() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(18.dp))
                 .background(cardBg)
-                .border(0.6.dp, cardBorder, RoundedCornerShape(16.dp))
+                .border(0.6.dp, cardBorder, RoundedCornerShape(18.dp))
                 .clickable {
                     scope.launch(Dispatchers.IO) {
                         if (currentPlaying?.uri == targetSong.uri) {
@@ -256,29 +236,43 @@ private fun JumpBackInCard() {
                         }
                     }
                 }
-                .padding(12.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Album art with smooth rounded corner
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(targetSong.thumb)
-                    .crossfade(true)
-                    .placeholder(R.drawable.placeholder_music_default_artwork)
-                    .error(R.drawable.placeholder_music_default_artwork)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
+            // Album art with smooth rounded corners
+            Box(
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(10.dp))
-            )
+                    .size(54.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF1E202C))
+                    .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(targetSong.thumb)
+                        .crossfade(true)
+                        .placeholder(R.drawable.placeholder_music_default_artwork)
+                        .error(R.drawable.placeholder_music_default_artwork)
+                        .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
 
             Spacer(modifier = Modifier.width(14.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
+                Text(
+                    text = "RESUME PLAYBACK",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = (Color.Black withNight Color.White).copy(alpha = 0.45f),
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = targetSong.title ?: defaultTitle,
                     fontWeight = FontWeight.SemiBold,
@@ -287,24 +281,24 @@ private fun JumpBackInCard() {
                     overflow = TextOverflow.Ellipsis,
                     color = Color.Black withNight Color.White
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(1.dp))
                 Text(
                     text = "${targetSong.artistsName ?: defaultArtistsName} • ${targetSong.album ?: defaultAlbum}",
-                    fontSize = 12.5.sp,
+                    fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = (Color.Black withNight Color.White).copy(alpha = 0.55f)
+                    color = (Color.Black withNight Color.White).copy(alpha = 0.5f)
                 )
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-            // Play / Pause Circle Action Button
+            // Pure White Tactile Play Button (Apple Music Luxury Standard)
             Box(
                 modifier = Modifier
-                    .size(38.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                    .background(Color.Black withNight Color.White)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(bounded = true),
@@ -335,8 +329,8 @@ private fun JumpBackInCard() {
                         }
                     ),
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.size(16.dp),
+                    tint = Color.White withNight Color(0xFF0C0D14)
                 )
             }
         }
@@ -344,7 +338,7 @@ private fun JumpBackInCard() {
 }
 
 /**
- * 3. Quick Picks: 3-Row vertical song stacks inside a horizontal pager.
+ * 3. Quick Picks: 3-Track Stack inside a unified glass container (NO individual grey capsules!)
  */
 @Composable
 private fun QuickPicksSection() {
@@ -371,19 +365,42 @@ private fun QuickPicksSection() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = stringResource(id = R.string.home_quick_picks),
-                fontWeight = FontWeight.Bold,
-                fontSize = 19.sp,
-                color = Color.Black withNight Color.White
-            )
-            Text(
-                text = "START A STATION",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                letterSpacing = 0.5.sp
-            )
+            Column {
+                Text(
+                    text = stringResource(id = R.string.home_quick_picks),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                    color = Color.Black withNight Color.White
+                )
+                Text(
+                    text = "Tracks you might like",
+                    fontSize = 12.sp,
+                    color = (Color.Black withNight Color.White).copy(alpha = 0.45f)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFFF0F0F4) withNight Color(0xFF1B1D2A))
+                    .border(0.6.dp, Color.White.copy(0.08f), RoundedCornerShape(16.dp))
+                    .clickable {
+                        if (songs.isNotEmpty()) {
+                            Vibrator.click(context)
+                            scope.launch(Dispatchers.IO) {
+                                MediaController.prepare(songs.first(), songs)
+                            }
+                        }
+                    }
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = "PLAY ALL",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black withNight Color.White,
+                    letterSpacing = 0.8.sp
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -391,17 +408,24 @@ private fun QuickPicksSection() {
         HorizontalPager(
             state = pagerState,
             pageSize = PageSize.Fixed(320.dp),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp),
             beyondViewportPageCount = 1
         ) { pageIndex ->
             val pageSongs = pages[pageIndex]
+            val cardShape = RoundedCornerShape(18.dp)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(end = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(end = 12.dp)
+                    .clip(cardShape)
+                    .background(Color(0xFFF7F7FA) withNight Color(0xFF141622))
+                    .border(
+                        0.6.dp,
+                        Color.Black.copy(alpha = 0.05f) withNight Color.White.copy(alpha = 0.08f),
+                        cardShape
+                    )
             ) {
-                pageSongs.forEach { song ->
+                pageSongs.forEachIndexed { idx, song ->
                     QuickPickItem(
                         song = song,
                         onClick = {
@@ -411,6 +435,13 @@ private fun QuickPicksSection() {
                             }
                         }
                     )
+                    if (idx < pageSongs.size - 1) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 66.dp, end = 14.dp),
+                            thickness = 0.5.dp,
+                            color = Color.Black.copy(alpha = 0.04f) withNight Color.White.copy(alpha = 0.06f)
+                        )
+                    }
                 }
             }
         }
@@ -422,44 +453,44 @@ private fun QuickPickItem(
     song: YosMediaItem,
     onClick: () -> Unit
 ) {
-    val rowBg = Color(0xFFF7F7F9) withNight Color(0xFF141416)
-    val borderCol = Color.Black.copy(alpha = 0.04f) withNight Color.White.copy(alpha = 0.06f)
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(rowBg)
-            .border(0.5.dp, borderCol, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 7.dp),
+            .padding(horizontal = 12.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(song.thumb)
-                .crossfade(true)
-                .placeholder(R.drawable.placeholder_music_default_artwork)
-                .error(R.drawable.placeholder_music_default_artwork)
-                .build(),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
+        Box(
             modifier = Modifier
                 .size(44.dp)
-                .clip(RoundedCornerShape(8.dp))
-        )
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFF1E202C))
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(song.thumb)
+                    .crossfade(true)
+                    .placeholder(R.drawable.placeholder_music_default_artwork)
+                    .error(R.drawable.placeholder_music_default_artwork)
+                    .build(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.title ?: defaultTitle,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = Color.Black withNight Color.White
             )
+            Spacer(modifier = Modifier.height(1.dp))
             Text(
                 text = song.artistsName ?: defaultArtistsName,
                 fontSize = 12.sp,
@@ -473,15 +504,15 @@ private fun QuickPickItem(
             painter = painterResource(id = R.drawable.ic_nowplaying_mp_play),
             contentDescription = null,
             modifier = Modifier
-                .size(16.dp)
-                .alpha(0.6f),
+                .size(14.dp)
+                .alpha(0.45f),
             tint = Color.Black withNight Color.White
         )
     }
 }
 
 /**
- * 4. Heavy Rotation: 2-Row Grid of most played or prominent albums.
+ * 4. Heavy Rotation: 2-Row Horizontal Album Grid with rich artwork and play circle.
  */
 @Composable
 private fun HeavyRotationSection(navController: NavController) {
@@ -489,7 +520,6 @@ private fun HeavyRotationSection(navController: NavController) {
     if (songs.isEmpty()) return
 
     val heavyRotationAlbums = remember(songs) {
-        // Group songs by album, sort by track count descending
         songs.groupBy { it.album ?: defaultAlbum }
             .entries
             .sortedByDescending { it.value.size }
@@ -517,15 +547,16 @@ private fun HeavyRotationSection(navController: NavController) {
         )
 
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 20.dp),
+            contentPadding = PaddingValues(horizontal = 18.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             items(heavyRotationAlbums) { (albumName, albumSongs) ->
                 val firstSong = albumSongs.firstOrNull()
+                val cardShape = RoundedCornerShape(14.dp)
                 Column(
                     modifier = Modifier
-                        .width(136.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .width(132.dp)
+                        .clip(cardShape)
                         .clickable {
                             Vibrator.click(context)
                             LibraryObject.setTargetAlbumName(albumName)
@@ -534,9 +565,10 @@ private fun HeavyRotationSection(navController: NavController) {
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(136.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF202024))
+                            .size(132.dp)
+                            .clip(cardShape)
+                            .background(Color(0xFF191B26))
+                            .border(0.6.dp, Color.White.copy(0.08f), cardShape)
                     ) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
@@ -549,6 +581,33 @@ private fun HeavyRotationSection(navController: NavController) {
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
+
+                        // Floating play circle
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(7.dp)
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(0.65f))
+                                .border(0.5.dp, Color.White.copy(0.2f), CircleShape)
+                                .clickable {
+                                    if (albumSongs.isNotEmpty()) {
+                                        Vibrator.click(context)
+                                        scope.launch(Dispatchers.IO) {
+                                            MediaController.prepare(albumSongs.first(), albumSongs)
+                                        }
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_nowplaying_mp_play),
+                                contentDescription = null,
+                                modifier = Modifier.size(13.dp),
+                                tint = Color.White
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -562,8 +621,8 @@ private fun HeavyRotationSection(navController: NavController) {
                         color = Color.Black withNight Color.White
                     )
                     Text(
-                        text = firstSong?.artistsName ?: defaultArtistsName,
-                        fontSize = 12.sp,
+                        text = "${firstSong?.artistsName ?: defaultArtistsName} • ${albumSongs.size}",
+                        fontSize = 11.5.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = (Color.Black withNight Color.White).copy(alpha = 0.5f)
@@ -596,30 +655,24 @@ private fun RecentlyAddedShelf(navController: NavController) {
             .fillMaxWidth()
             .padding(vertical = 12.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(id = R.string.home_recently_added),
-                fontWeight = FontWeight.Bold,
-                fontSize = 19.sp,
-                color = Color.Black withNight Color.White
-            )
-        }
+        Text(
+            text = stringResource(id = R.string.home_recently_added),
+            fontWeight = FontWeight.Bold,
+            fontSize = 19.sp,
+            color = Color.Black withNight Color.White,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
+        )
 
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 20.dp),
+            contentPadding = PaddingValues(horizontal = 18.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             items(recentAlbums) { song ->
+                val cardShape = RoundedCornerShape(14.dp)
                 Column(
                     modifier = Modifier
-                        .width(136.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .width(132.dp)
+                        .clip(cardShape)
                         .clickable {
                             Vibrator.click(context)
                             LibraryObject.setTargetAlbumName(song.album ?: defaultAlbum)
@@ -628,9 +681,10 @@ private fun RecentlyAddedShelf(navController: NavController) {
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(136.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF202024))
+                            .size(132.dp)
+                            .clip(cardShape)
+                            .background(Color(0xFF191B26))
+                            .border(0.6.dp, Color.White.copy(0.08f), cardShape)
                     ) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
@@ -657,7 +711,7 @@ private fun RecentlyAddedShelf(navController: NavController) {
                     )
                     Text(
                         text = song.artistsName ?: defaultArtistsName,
-                        fontSize = 12.sp,
+                        fontSize = 11.5.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = (Color.Black withNight Color.White).copy(alpha = 0.5f)
@@ -669,7 +723,7 @@ private fun RecentlyAddedShelf(navController: NavController) {
 }
 
 /**
- * Hero Recommendations Carousel ("Try These").
+ * 6. Hero Recommendations Carousel ("Try These").
  */
 @Composable
 fun RecommendCard(imageViewModel: ImageViewModel) {
@@ -702,7 +756,6 @@ fun RecommendCard(imageViewModel: ImageViewModel) {
                 text = stringResource(id = R.string.home_recommend_title),
                 fontWeight = FontWeight.Bold,
                 fontSize = 19.sp,
-                lineHeight = 19.sp,
                 color = Color.Black withNight Color.White,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
             )
@@ -711,8 +764,8 @@ fun RecommendCard(imageViewModel: ImageViewModel) {
 
             HorizontalPager(
                 state = pagerState,
-                pageSize = PageSize.Fixed(280.dp),
-                contentPadding = PaddingValues(start = 20.dp, end = 60.dp),
+                pageSize = PageSize.Fixed(290.dp),
+                contentPadding = PaddingValues(start = 18.dp, end = 50.dp),
                 key = { pageIndex -> "$pageIndex:${randomMusicList.value.getOrNull(pageIndex)?.uri}" },
                 beyondViewportPageCount = 1
             ) { page ->
@@ -759,31 +812,37 @@ fun buildRecentlyPlayedDisplayItems(
     var currentIndex = 0
     while (currentIndex < rawHistory.size) {
         val currentSong = rawHistory[currentIndex]
-        val currentAlbum = currentSong.album ?: defaultAlbum
-        var consecutiveCount = 1
-        while (currentIndex + consecutiveCount < rawHistory.size &&
-            (rawHistory[currentIndex + consecutiveCount].album ?: defaultAlbum) == currentAlbum
-        ) {
-            consecutiveCount++
+        val currentAlbum = currentSong.album
+
+        if (currentAlbum.isNullOrEmpty() || currentAlbum == defaultAlbum) {
+            groupedItems.add(RecentlyPlayedDisplayItem.Song(currentSong))
+            currentIndex++
+        } else {
+            val contiguousRun = mutableListOf(currentSong)
+            var peekIndex = currentIndex + 1
+            while (peekIndex < rawHistory.size && rawHistory[peekIndex].album == currentAlbum) {
+                contiguousRun.add(rawHistory[peekIndex])
+                peekIndex++
+            }
+
+            if (contiguousRun.size >= 2) {
+                groupedItems.add(
+                    RecentlyPlayedDisplayItem.AlbumGroup(
+                        albumName = currentAlbum,
+                        artistName = currentSong.albumArtists ?: currentSong.artistsName ?: defaultArtistsName,
+                        artworkUri = currentSong.thumb,
+                        songs = contiguousRun.toList()
+                    )
+                )
+            } else {
+                groupedItems.add(RecentlyPlayedDisplayItem.Song(currentSong))
+            }
+            currentIndex = peekIndex
         }
 
-        if (consecutiveCount >= 4) {
-            val albumSongs = rawHistory.subList(currentIndex, currentIndex + consecutiveCount)
-            groupedItems.add(
-                RecentlyPlayedDisplayItem.AlbumGroup(
-                    albumName = currentAlbum,
-                    artistName = currentSong.albumArtists ?: currentSong.artistsName ?: defaultArtistsName,
-                    artworkUri = currentSong.thumb,
-                    songs = albumSongs
-                )
-            )
-        } else {
-            for (songOffset in 0 until consecutiveCount) {
-                groupedItems.add(RecentlyPlayedDisplayItem.Song(rawHistory[currentIndex + songOffset]))
-            }
+        if (groupedItems.size >= maximumDisplayCount) {
+            break
         }
-        currentIndex += consecutiveCount
-        if (groupedItems.size >= maximumDisplayCount) break
     }
 
     return groupedItems.take(maximumDisplayCount)
@@ -791,163 +850,166 @@ fun buildRecentlyPlayedDisplayItems(
 
 @Composable
 fun RecentlyPlayedCard() {
-    val recentlyPlayedHistory = ListenHistoryManager.recentlyPlayedSongs.value
-    val listenHistoryEnabled = SettingsLibrary.ListenHistory
-
-    if (!listenHistoryEnabled || recentlyPlayedHistory.isEmpty()) return
-
-    val displayItems = remember(recentlyPlayedHistory) {
-        buildRecentlyPlayedDisplayItems(recentlyPlayedHistory)
+    val history = ListenHistoryManager.recentlyPlayedSongs.value
+    val displayItems = remember(history) {
+        buildRecentlyPlayedDisplayItems(history, maximumDisplayCount = 10)
     }
 
-    if (displayItems.isEmpty()) return
+    if (displayItems.isNotEmpty()) {
+        val scope = rememberCoroutineScope()
 
-    val pagerState = rememberPagerState(pageCount = { displayItems.size })
-    val scope = rememberCoroutineScope()
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.home_recently_played),
+                fontWeight = FontWeight.Bold,
+                fontSize = 19.sp,
+                color = Color.Black withNight Color.White,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
+            )
 
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp)
-    ) {
-        Text(
-            text = stringResource(id = R.string.home_recently_played_title),
-            fontWeight = FontWeight.Bold,
-            fontSize = 19.sp,
-            lineHeight = 19.sp,
-            color = Color.Black withNight Color.White,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
-        )
-
-        HorizontalPager(
-            state = pagerState,
-            pageSize = PageSize.Fixed(280.dp),
-            contentPadding = PaddingValues(start = 20.dp, end = 60.dp),
-            key = { pageIndex ->
-                when (val displayItem = displayItems[pageIndex]) {
-                    is RecentlyPlayedDisplayItem.Song -> "$pageIndex:song:${displayItem.song.uri}"
-                    is RecentlyPlayedDisplayItem.AlbumGroup -> "$pageIndex:album:${displayItem.albumName}"
-                }
-            },
-            beyondViewportPageCount = 1
-        ) { page ->
-            when (val displayItem = displayItems[page]) {
-                is RecentlyPlayedDisplayItem.Song -> {
-                    val songsOnlyFromDisplayItems = displayItems.filterIsInstance<RecentlyPlayedDisplayItem.Song>().map { it.song }
-                    RecommendCardItem(
-                        music = displayItem.song,
-                        onClick = {
-                            scope.launch(Dispatchers.IO) {
-                                MediaController.prepare(
-                                    displayItem.song,
-                                    songsOnlyFromDisplayItems
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 18.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(
+                    count = displayItems.size,
+                    key = { index ->
+                        when (val item = displayItems[index]) {
+                            is RecentlyPlayedDisplayItem.Song -> "song_${item.song.uri ?: item.song.mediaId}_$index"
+                            is RecentlyPlayedDisplayItem.AlbumGroup -> "album_${item.albumName}_$index"
+                        }
+                    }
+                ) { index ->
+                    when (val item = displayItems[index]) {
+                        is RecentlyPlayedDisplayItem.Song -> {
+                            val song = item.song
+                            val cardShape = RoundedCornerShape(14.dp)
+                            Column(
+                                modifier = Modifier
+                                    .width(132.dp)
+                                    .clip(cardShape)
+                                    .clickable {
+                                        scope.launch(Dispatchers.IO) {
+                                            MediaController.prepare(song, history)
+                                        }
+                                    }
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(132.dp)
+                                        .clip(cardShape)
+                                        .background(Color(0xFF191B26))
+                                        .border(0.6.dp, Color.White.copy(0.08f), cardShape)
+                                ) {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(song.thumb)
+                                            .crossfade(true)
+                                            .placeholder(R.drawable.placeholder_music_default_artwork)
+                                            .error(R.drawable.placeholder_music_default_artwork)
+                                            .build(),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = song.title ?: defaultTitle,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.5.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = Color.Black withNight Color.White
+                                )
+                                Text(
+                                    text = song.artistsName ?: defaultArtistsName,
+                                    fontSize = 11.5.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = (Color.Black withNight Color.White).copy(alpha = 0.5f)
                                 )
                             }
                         }
-                    )
-                }
-                is RecentlyPlayedDisplayItem.AlbumGroup -> {
-                    RecentlyPlayedAlbumCardItem(
-                        albumGroup = displayItem,
-                        onClick = {
-                            scope.launch(Dispatchers.IO) {
-                                val fullAlbumSongs = runCatching { MusicLibrary.Album[displayItem.albumName] }.getOrDefault(emptyList())
-                                    .sortedWith(compareBy({ it.discNumber ?: 0 }, { it.trackNumber ?: 0 }))
-                                if (fullAlbumSongs.isNotEmpty()) {
-                                    MediaController.prepare(
-                                        fullAlbumSongs.first(),
-                                        fullAlbumSongs
+                        is RecentlyPlayedDisplayItem.AlbumGroup -> {
+                            val cardShape = RoundedCornerShape(14.dp)
+                            Column(
+                                modifier = Modifier
+                                    .width(132.dp)
+                                    .clip(cardShape)
+                                    .clickable {
+                                        scope.launch(Dispatchers.IO) {
+                                            MediaController.prepare(item.songs.first(), item.songs)
+                                        }
+                                    }
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(132.dp)
+                                        .clip(cardShape)
+                                        .background(Color(0xFF191B26))
+                                        .border(0.6.dp, Color.White.copy(0.08f), cardShape)
+                                ) {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(item.artworkUri)
+                                            .crossfade(true)
+                                            .placeholder(R.drawable.placeholder_music_default_artwork)
+                                            .error(R.drawable.placeholder_music_default_artwork)
+                                            .build(),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = item.albumName,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.5.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = Color.Black withNight Color.White
+                                )
+                                Text(
+                                    text = "${item.artistName} • ${item.songs.size} tracks",
+                                    fontSize = 11.5.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = (Color.Black withNight Color.White).copy(alpha = 0.5f)
+                                )
                             }
                         }
-                    )
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-fun RecentlyPlayedAlbumCardItem(
-    albumGroup: RecentlyPlayedDisplayItem.AlbumGroup,
-    onClick: () -> Unit
-) = Column(
-    Modifier
-        .width(268.dp)
-        .padding(end = 12.dp)
-) {
-    val shape = RoundedCornerShape(16.dp)
-
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .height(320.dp)
-            .clip(shape)
-            .background(Color(0xFF1B1B1E))
-            .border(0.5.dp, Color.White.copy(alpha = 0.08f), shape)
-            .clickable(onClick = onClick)
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(albumGroup.artworkUri)
-                .crossfade(true)
-                .error(R.drawable.placeholder_music_default_artwork)
-                .placeholder(R.drawable.placeholder_music_default_artwork)
-                .fallback(R.drawable.placeholder_music_default_artwork)
-                .build(),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-        )
-
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = albumGroup.albumName,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                lineHeight = 16.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = albumGroup.artistName,
-                fontSize = 12.5.sp,
-                lineHeight = 13.sp,
-                color = Color.White.copy(alpha = 0.6f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
+/**
+ * Cinematic Hero Card with full-bleed curved imagery and bottom gradient scrim.
+ */
 @Composable
 fun RecommendCardItem(music: YosMediaItem, onClick: () -> Unit) =
     Column(
         Modifier
-            .width(268.dp)
+            .width(280.dp)
             .padding(end = 12.dp)
     ) {
-        val shape = RoundedCornerShape(16.dp)
+        val shape = RoundedCornerShape(20.dp)
 
-        Column(
+        Box(
             Modifier
                 .fillMaxWidth()
-                .height(320.dp)
+                .height(210.dp)
                 .clip(shape)
-                .background(Color(0xFF1B1B1E))
-                .border(0.5.dp, Color.White.copy(alpha = 0.08f), shape)
+                .background(Color(0xFF161824))
+                .border(0.6.dp, Color.White.copy(alpha = 0.10f), shape)
                 .clickable(onClick = onClick)
         ) {
             AsyncImage(
@@ -960,36 +1022,81 @@ fun RecommendCardItem(music: YosMediaItem, onClick: () -> Unit) =
                     .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp)
+                modifier = Modifier.fillMaxSize()
             )
 
-            Column(
-                Modifier
+            // Cinematic gradient scrim overlay at the bottom
+            Box(
+                modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.Center
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color(0x33000000),
+                                Color(0xCC0C0D14),
+                                Color(0xF50C0D14)
+                            )
+                        )
+                    )
+            )
+
+            // Overlaid typography & play button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomStart)
+                    .padding(14.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = music.title ?: defaultTitle,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    lineHeight = 16.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "${music.artistsName ?: defaultArtistsName} • ${music.album ?: defaultAlbum}",
-                    fontSize = 12.5.sp,
-                    lineHeight = 13.sp,
-                    color = Color.White.copy(alpha = 0.6f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.Medium
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "FEATURED",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.6f),
+                        letterSpacing = 1.2.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = music.title ?: defaultTitle,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.5.sp,
+                        lineHeight = 18.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(1.dp))
+                    Text(
+                        text = "${music.artistsName ?: defaultArtistsName} • ${music.album ?: defaultAlbum}",
+                        fontSize = 12.sp,
+                        lineHeight = 14.sp,
+                        color = Color.White.copy(alpha = 0.65f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .clickable(onClick = onClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_nowplaying_mp_play),
+                        contentDescription = null,
+                        modifier = Modifier.size(15.dp),
+                        tint = Color(0xFF0C0D14)
+                    )
+                }
             }
         }
     }
