@@ -864,7 +864,7 @@ fun RecentlyPlayedCard() {
                 .padding(vertical = 12.dp)
         ) {
             Text(
-                text = stringResource(id = R.string.home_recently_played),
+                text = stringResource(id = R.string.home_recently_played_title),
                 fontWeight = FontWeight.Bold,
                 fontSize = 19.sp,
                 color = Color.Black withNight Color.White,
