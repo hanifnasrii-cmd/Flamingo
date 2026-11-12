@@ -66,6 +66,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -843,6 +844,18 @@ class MainActivity : BaseActivity() {
                                         val miniPlayerTrackKey =
                                             miniPlayerTrack?.mediaId ?: miniPlayerTrack?.uri?.toString()
                                             ?: ""
+                                        val miniPlayerProgress = remember("MainActivity_miniPlayerProgress") {
+                                            mutableFloatStateOf(0f)
+                                        }
+                                        LaunchedEffect(isPlaying.value, miniPlayerTrackKey) {
+                                            while (isPlaying.value) {
+                                                val ctrl = MediaController.mediaControl
+                                                val pos = ctrl?.currentPosition ?: 0L
+                                                val dur = (ctrl?.duration ?: 0L).coerceAtLeast(1L)
+                                                miniPlayerProgress.floatValue = (pos.toFloat() / dur.toFloat()).coerceIn(0f, 1f)
+                                                delay(500)
+                                            }
+                                        }
                                         val systemMediaControlResolver = remember(context) {
                                             SystemMediaControlResolver(context)
                                         }
@@ -1079,14 +1092,34 @@ class MainActivity : BaseActivity() {
                                                                         clip = true
                                                                     }
                                                             ) {
-                                                                Row(
+                                                                Column(
                                                                     Modifier
                                                                         .height(miniPlayerHeight)
                                                                         .fillMaxWidth()
-                                                                        .padding(
-                                                                            horizontal = 8.dp
-                                                                        )
                                                                 ) {
+                                                                    // Thin 1.5dp playback progress indicator
+                                                                    Box(
+                                                                        modifier = Modifier
+                                                                            .fillMaxWidth()
+                                                                            .height(1.5.dp)
+                                                                            .background(Color.White.copy(alpha = 0.08f))
+                                                                    ) {
+                                                                        Box(
+                                                                            modifier = Modifier
+                                                                                .fillMaxWidth(fraction = miniPlayerProgress.floatValue)
+                                                                                .height(1.5.dp)
+                                                                                .background(MaterialTheme.colorScheme.primary)
+                                                                        )
+                                                                    }
+
+                                                                    Row(
+                                                                        Modifier
+                                                                            .weight(1f)
+                                                                            .fillMaxWidth()
+                                                                            .padding(
+                                                                                horizontal = 8.dp
+                                                                            )
+                                                                    ) {
                                                                     Row(
                                                                         Modifier
                                                                             .height(
@@ -1095,16 +1128,31 @@ class MainActivity : BaseActivity() {
                                                                             .weight(1f),
                                                                         verticalAlignment = Alignment.CenterVertically
                                                                     ) {
-                                                                        YosWrapper {
-                                                                            ShadowImageWithCache(
-                                                                                dataLambda = { MediaViewModelObject.bitmap.value },
-                                                                                contentDescription = null,
-                                                                                modifier = Modifier
-                                                                                    .size(47.dp),
-                                                                                cornerRadius = 6.dp,
-                                                                                shadowAlpha = 0f,
-                                                                                imageQuality = ImageQuality.LOW
-                                                                            )
+                                                                        Box(
+                                                                            modifier = Modifier
+                                                                                .size(46.dp)
+                                                                                .clip(RoundedCornerShape(10.dp))
+                                                                                .background(Color(0xFF222226)),
+                                                                            contentAlignment = Alignment.Center
+                                                                        ) {
+                                                                            val artworkUri = MediaViewModelObject.bitmap.value
+                                                                            if (artworkUri != null) {
+                                                                                ShadowImageWithCache(
+                                                                                    dataLambda = { artworkUri },
+                                                                                    contentDescription = null,
+                                                                                    modifier = Modifier.fillMaxSize(),
+                                                                                    cornerRadius = 10.dp,
+                                                                                    shadowAlpha = 0f,
+                                                                                    imageQuality = ImageQuality.LOW
+                                                                                )
+                                                                            } else {
+                                                                                Icon(
+                                                                                    painter = painterResource(id = R.drawable.ic_library_link_icon_songs),
+                                                                                    contentDescription = null,
+                                                                                    modifier = Modifier.size(20.dp),
+                                                                                    tint = (Color.Black withNight Color.White).copy(alpha = 0.35f)
+                                                                                )
+                                                                            }
                                                                         }
                                                                         Box(
                                                                             Modifier
@@ -1133,29 +1181,24 @@ class MainActivity : BaseActivity() {
                                                                                             ) / widthPx
                                                                                         ).coerceIn(0f, 0.35f)
                                                                                 }
-                                                                            ) {
-                                                                                Text(
-                                                                                    text = miniPlayerTrack?.title
-                                                                                        ?: defaultTitle,
-                                                                                    fontWeight = FontWeight.Medium,
-                                                                                    fontSize = 16.sp,
-                                                                                    lineHeight = 16.sp,
-                                                                                    maxLines = 1,
-                                                                                    overflow = TextOverflow.Ellipsis,
-                                                                                    color = Color.Black withNight Color.White
-                                                                                )
-                                                                                /*Text(
-                                                                     text = musicPlaying.value?.Artist
-                                                                         ?: "未知艺术家",
-                                                                     fontSize = 13.5.sp,
-                                                                     lineHeight = 13.5.sp,
-                                                                     modifier = Modifier.alpha(
-                                                                         0.6f
-                                                                     ),
-                                                                     maxLines = 1,
-                                                                     overflow = TextOverflow.Ellipsis,
-                                                                     color = Color.Black withNight Color.White
-                                                                 )*/
+                                                                            ) {                                                    Text(
+                                                        text = miniPlayerTrack?.title ?: defaultTitle,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        fontSize = 14.5.sp,
+                                                        lineHeight = 16.sp,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        color = Color.Black withNight Color.White
+                                                    )
+                                                    Spacer(modifier = Modifier.height(2.dp))
+                                                    Text(
+                                                        text = miniPlayerTrack?.artistsName ?: defaultArtistsName,
+                                                        fontSize = 12.sp,
+                                                        lineHeight = 13.sp,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        color = (Color.Black withNight Color.White).copy(alpha = 0.55f)
+                                                    )
                                                                             }
                                                                         }
                                                                     }
@@ -1267,6 +1310,7 @@ class MainActivity : BaseActivity() {
                                                                             }
                                                                         }
                                                                     }
+                                                                }
                                                                 }
                                                             }
                                                         }

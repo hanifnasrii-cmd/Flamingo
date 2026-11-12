@@ -95,14 +95,14 @@ fun RowScope.NavigatorItem(
             contentDescription = null,
             tint = color.value,
             modifier = Modifier
-                .size(30.dp)
-                .padding(bottom = 0.dp)
+                .size(23.dp)
+                .padding(bottom = 2.dp)
         )
         Text(
             item.label,
             color = color.value,
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             lineHeight = 12.sp,
-            fontWeight = FontWeight.Medium
+            fontWeight = if (isSelected.value) FontWeight.SemiBold else FontWeight.Normal
         )
     }

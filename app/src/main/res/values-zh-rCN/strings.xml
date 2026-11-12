@@ -273,4 +273,25 @@
     <string name="settings_stats_export_done_toast">统计数据已导出</string>
     <string name="settings_stats_export_failed_toast">导出失败</string>
     <string name="settings_stats_cancel">取消</string>
+
+    <string name="home_greeting_morning">早上好</string>
+    <string name="home_greeting_afternoon">下午好</string>
+    <string name="home_greeting_evening">晚上好</string>
+    <string name="home_jump_back_in">继续播放</string>
+    <string name="home_heavy_rotation">常听</string>
+    <string name="home_quick_picks">快速选择</string>
+    <string name="home_recently_added">最近添加</string>
+    <string name="stats_quiet_stage_title">今天音乐舞台很安静。</string>
+    <string name="stats_quiet_stage_subtitle">开始听歌或随机播放音乐库以记录您的音乐旅程。</string>
+    <string name="stats_shuffle_library">随机播放音乐库</string>
+    <string name="stats_top_anthem">最爱单曲</string>
+    <string name="stats_top_genres">主要流派</string>
+    <string name="stats_weekly_activity">每周活跃度</string>
+    <string name="stats_streak_days">连续听歌 %d 天</string>
+    <string name="library_smart_favorites">特别喜欢</string>
+    <string name="library_smart_top_25">最常播放 25 首</string>
+    <string name="library_smart_recently_played">最近播放</string>
+    <string name="library_smart_recently_added">最近添加</string>
+    <string name="library_folders">文件夹</string>
+    <string name="library_recently_added_title">最近添加</string>
 </resources>

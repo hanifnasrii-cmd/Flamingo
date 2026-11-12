@@ -286,4 +286,26 @@
     <string name="settings_stats_export_done_toast">Statistics exported</string>
     <string name="settings_stats_export_failed_toast">Export failed</string>
     <string name="settings_stats_cancel">Cancel</string>
+
+    <!-- Overhaul strings -->
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_jump_back_in">Jump Back In</string>
+    <string name="home_heavy_rotation">Heavy Rotation</string>
+    <string name="home_quick_picks">Quick Picks</string>
+    <string name="home_recently_added">Recently Added</string>
+    <string name="stats_quiet_stage_title">Your music stage is quiet today.</string>
+    <string name="stats_quiet_stage_subtitle">Start listening or shuffle your library to begin tracking your music journey.</string>
+    <string name="stats_shuffle_library">Shuffle Library</string>
+    <string name="stats_top_anthem">Top Anthem</string>
+    <string name="stats_top_genres">Top Genres</string>
+    <string name="stats_weekly_activity">Weekly Activity</string>
+    <string name="stats_streak_days">%d-Day Streak</string>
+    <string name="library_smart_favorites">Favorites</string>
+    <string name="library_smart_top_25">Top 25</string>
+    <string name="library_smart_recently_played">Recently Played</string>
+    <string name="library_smart_recently_added">Recently Added</string>
+    <string name="library_folders">Folders</string>
+    <string name="library_recently_added_title">Recently Added</string>
 </resources>
