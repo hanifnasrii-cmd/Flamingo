@@ -11,6 +11,8 @@ jobs:
   build:
     name: Build Debug APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -28,8 +30,14 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew assembleDebug --stacktrace
 
+      - name: Prepare APK Output
+        run: |
+          mkdir -p apk-dist
+          find app/build/outputs/apk/ -type f \( -name "*.apk" -o -name "*.ApK" -o -name "*.APK" \) -exec cp {} apk-dist/Flamingo-Overhaul-Debug.apk \;
+          ls -lh apk-dist/
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: Flamingo-Overhaul-Debug-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: apk-dist/Flamingo-Overhaul-Debug.apk
